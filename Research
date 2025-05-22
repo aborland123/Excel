@@ -1,0 +1,52 @@
+import streamlit as st
+import openpyxl
+
+EXCEL_PATH = "calculations.xlsx"
+
+st.title("Excel Calculation App 🔢")
+
+# Input fields
+x = st.number_input("Enter value for x", value=0.0)
+y = st.number_input("Enter value for y", value=0.0)
+
+if st.button("Calculate"):
+    try:
+        # Step 1: Load workbook and write inputs
+        wb = openpyxl.load_workbook(EXCEL_PATH, data_only=False)
+        ws = wb["Sheet1"]
+        ws["A2"] = x
+        ws["B2"] = y
+        wb.save(EXCEL_PATH)
+
+        # Step 2: Reopen to get the calculated result
+        wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
+        ws = wb["Sheet1"]
+        result = ws["C2"].value
+
+        st.success(f"Calculated Result from Excel: {result}")
+
+    except Exception as e:
+        st.error(f"Something went wrong: {e}")
+
+
+for different values:
+
+formula_choice = st.selectbox("Choose a formula", ["Formula 1", "Formula 2", "Formula 3"])
+
+# Write inputs
+ws["A2"] = x
+ws["B2"] = y
+wb.save(EXCEL_PATH)
+
+# Reopen to get result based on selection
+wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
+ws = wb["Sheet1"]
+
+if formula_choice == "Formula 1":
+    result = ws["C2"].value
+elif formula_choice == "Formula 2":
+    result = ws["D2"].value
+else:
+    result = ws["E2"].value
+
+st.success(f"Result: {result}")
