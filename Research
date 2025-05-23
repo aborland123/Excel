@@ -50,3 +50,110 @@ else:
     result = ws["E2"].value
 
 st.success(f"Result: {result}")
+
+
+
+
+
+
+import streamlit as st
+import openpyxl
+
+EXCEL_PATH = "calculations.xlsx"
+
+st.set_page_config(page_title="Cost Tool", layout="wide")
+st.title("Carbon Capture Cost Analysis Tool")
+
+st.markdown("### General Inputs")
+col1, col2 = st.columns(2)
+with col1:
+    flue_gas = st.text_input("Flue Gas", placeholder="e.g., NGCC")
+with col2:
+    co2_rate = st.number_input("CO₂ Capture Rate (%)", value=90)
+
+# Triple input helper
+def triple_input_row(label, low_default, base_default, high_default, key_prefix):
+    st.markdown(f"**{label}**")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        low = st.number_input("Lower", value=low_default, key=f"{key_prefix}_low")
+    with col2:
+        base = st.number_input("Baseline", value=base_default, key=f"{key_prefix}_base")
+    with col3:
+        high = st.number_input("Upper", value=high_default, key=f"{key_prefix}_high")
+    return low, base, high
+
+st.markdown("### Economic Inputs")
+cap_low, cap_base, cap_high = triple_input_row("Capacity Factor (%)", 50, 85, 95, "cap")
+ng_low, ng_base, ng_high = triple_input_row("NG Price ($/MMBtu)", 1.3, 4.42, 9.4, "ng")
+solv_low, solv_base, solv_high = triple_input_row("Solvent Unit Price ($/ton)", 550, 1040, 10400, "solv")
+labor_low, labor_base, labor_high = triple_input_row("Labor Rate ($/hr)", 30, 38.5, 50, "labor")
+trans_low, trans_base, trans_high = triple_input_row("Transport & Storage Cost ($/ton)", 5, 10, 15, "trans")
+eng_low, eng_base, eng_high = triple_input_row("Engineering Fee (%)", 5, 20, 25, "eng")
+cont_low, cont_base, cont_high = triple_input_row("Contingency (%)", 15, 16.67, 30, "cont")
+capex_low, capex_base, capex_high = triple_input_row("CPECI", 603.1, 615.9, 831.7, "capex")
+
+col_btn1, col_btn2 = st.columns(2)
+with col_btn1:
+    if st.button("Calculate"):
+        try:
+            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=False)
+            ws = wb["Sheet1"]
+
+            # Placeholders for writing inputs
+            ws["A2"] = flue_gas
+            ws["B2"] = co2_rate
+            ws["C2"] = cap_base
+            ws["D2"] = ng_base
+            ws["E2"] = solv_base
+            ws["F2"] = labor_base
+            ws["G2"] = trans_base
+            ws["H2"] = eng_base
+            ws["I2"] = cont_base
+            ws["J2"] = capex_base
+
+            wb.save(EXCEL_PATH)
+
+            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
+            ws = wb["Sheet1"]
+            result = ws["Z10"].value  # Placeholder for single result cell
+
+            st.markdown("### Result")
+            st.success(f"Calculated Cost: {result}")
+
+        except Exception as e:
+            st.error(f"Error: {e}")
+
+with col_btn2:
+    if st.button("Calculate Sensitivity"):
+        try:
+            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=False)
+            ws = wb["Sheet1"]
+
+            # Write baseline values again
+            ws["A2"] = flue_gas
+            ws["B2"] = co2_rate
+            ws["C2"] = cap_base
+            ws["D2"] = ng_base
+            ws["E2"] = solv_base
+            ws["F2"] = labor_base
+            ws["G2"] = trans_base
+            ws["H2"] = eng_base
+            ws["I2"] = cont_base
+            ws["J2"] = capex_base
+
+            wb.save(EXCEL_PATH)
+
+            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
+            ws = wb["Sheet1"]
+            low = ws["Z25"].value
+            base = ws["Z26"].value
+            high = ws["Z27"].value
+
+            st.markdown("### Sensitivity Results")
+            st.info(f"Lower Bound: {low}")
+            st.success(f"Baseline: {base}")
+            st.warning(f"Upper Bound: {high}")
+
+        except Exception as e:
+            st.error(f"Error: {e}")
