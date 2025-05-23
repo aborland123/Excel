@@ -1,159 +1,170 @@
 import streamlit as st
-import openpyxl
-
-EXCEL_PATH = "calculations.xlsx"
-
-st.title("Excel Calculation App 🔢")
-
-# Input fields
-x = st.number_input("Enter value for x", value=0.0)
-y = st.number_input("Enter value for y", value=0.0)
-
-if st.button("Calculate"):
-    try:
-        # Step 1: Load workbook and write inputs
-        wb = openpyxl.load_workbook(EXCEL_PATH, data_only=False)
-        ws = wb["Sheet1"]
-        ws["A2"] = x
-        ws["B2"] = y
-        wb.save(EXCEL_PATH)
-
-        # Step 2: Reopen to get the calculated result
-        wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
-        ws = wb["Sheet1"]
-        result = ws["C2"].value
-
-        st.success(f"Calculated Result from Excel: {result}")
-
-    except Exception as e:
-        st.error(f"Something went wrong: {e}")
 
 
-for different values:
+## TO DO
+## update names of everything
+## Add the final 5 boxes
 
-formula_choice = st.selectbox("Choose a formula", ["Formula 1", "Formula 2", "Formula 3"])
+st.set_page_config(page_title="Cost Tool", layout="centered")
 
-# Write inputs
-ws["A2"] = x
-ws["B2"] = y
-wb.save(EXCEL_PATH)
-
-# Reopen to get result based on selection
-wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
-ws = wb["Sheet1"]
-
-if formula_choice == "Formula 1":
-    result = ws["C2"].value
-elif formula_choice == "Formula 2":
-    result = ws["D2"].value
-else:
-    result = ws["E2"].value
-
-st.success(f"Result: {result}")
-
-
-
-
-
-
-import streamlit as st
-import openpyxl
-
-EXCEL_PATH = "calculations.xlsx"
-
-st.set_page_config(page_title="Cost Tool", layout="wide")
 st.title("Carbon Capture Cost Analysis Tool")
 
-st.markdown("### General Inputs")
-col1, col2 = st.columns(2)
+#Changing the font sizing of the captions like "Lower Bound"
+st.markdown(
+    """
+    <style>
+      /* Only shrink the captions, leaving everything else alone */
+      div[data-testid="stCaptionContainer"] > p {
+        font-size: 0.68rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Changing the font sizing of the labels like "FCR", "Capacity Factor", etc to match "Flue Gas"
+st.markdown(
+    """
+    <style>
+      /* Only shrink the captions, leaving everything else alone */
+      div[data-testid="stMarkdownContainer"] > p {
+        font-size: 0.86rem !important;
+        line-height: 4 !important;
+        margin: 0 !important;
+        padding: 4 !important;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# Changing the style of the buttons 
+st.markdown(
+    """
+    <style>
+      /* Base styling for all st.button widgets */
+      div[data-testid="stButton"] > button {
+        background-color: #F37008 !important;
+        color: #FFF !important;
+        border: none !important;
+        max-width: 200px !important;
+        width: auto !important;
+        padding: 0.2rem 0.5rem !important;
+        min-height: 2.6rem !important;
+        height: 2.6rem !important;
+        font-size: 0.80rem !important;
+        border-radius: 0.9rem !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        outline: none !important;              /* kill any default focus outline */
+      }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+#st.markdown("### Calculation Inputs")
+col1, col2, col3 = st.columns(3)
 with col1:
     flue_gas = st.text_input("Flue Gas", placeholder="e.g., NGCC")
 with col2:
-    co2_rate = st.number_input("CO₂ Capture Rate (%)", value=90)
+    flue_gas_flow_rate_after_dcc = st.number_input("Flue gas flow rate (after DCC) (kg/hr)", value=3889654)
+with col3:
+    l_g = st.number_input("L/G (kg/kg)", value=1.13)
+    
 
-# Triple input helper
-def triple_input_row(label, low_default, base_default, high_default, key_prefix):
-    st.markdown(f"**{label}**")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        low = st.number_input("Lower", value=low_default, key=f"{key_prefix}_low")
-    with col2:
-        base = st.number_input("Baseline", value=base_default, key=f"{key_prefix}_base")
-    with col3:
-        high = st.number_input("Upper", value=high_default, key=f"{key_prefix}_high")
-    return low, base, high
+col1, col2, col3 = st.columns(3)
+with col1:
+    co2_capture_rate = st.number_input("CO₂ Capture Rate (%)", value=90)
+with col2:
+    cost_index = st.selectbox("Cost Index", ["2018 Dec", "2018 Nov",])
+with col3: 
+    st.write("FCR")
+    lb, base, ub = col3.columns(3)
 
-st.markdown("### Economic Inputs")
-cap_low, cap_base, cap_high = triple_input_row("Capacity Factor (%)", 50, 85, 95, "cap")
-ng_low, ng_base, ng_high = triple_input_row("NG Price ($/MMBtu)", 1.3, 4.42, 9.4, "ng")
-solv_low, solv_base, solv_high = triple_input_row("Solvent Unit Price ($/ton)", 550, 1040, 10400, "solv")
-labor_low, labor_base, labor_high = triple_input_row("Labor Rate ($/hr)", 30, 38.5, 50, "labor")
-trans_low, trans_base, trans_high = triple_input_row("Transport & Storage Cost ($/ton)", 5, 10, 15, "trans")
-eng_low, eng_base, eng_high = triple_input_row("Engineering Fee (%)", 5, 20, 25, "eng")
-cont_low, cont_base, cont_high = triple_input_row("Contingency (%)", 15, 16.67, 30, "cont")
-capex_low, capex_base, capex_high = triple_input_row("CPECI", 603.1, 615.9, 831.7, "capex")
+    with lb:
+        fcr_lower_bound = st.number_input(label="", value=0.05, min_value=0.00000, label_visibility="collapsed")
+        st.caption("Lower Bound")
 
-col_btn1, col_btn2 = st.columns(2)
-with col_btn1:
-    if st.button("Calculate"):
-        try:
-            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=False)
-            ws = wb["Sheet1"]
+    with base:
+        fcr_baseline = st.number_input(label="", value=0.0707, min_value=0.00000, format="%.4f", label_visibility="collapsed")
+        st.caption("Baseline")
 
-            # Placeholders for writing inputs
-            ws["A2"] = flue_gas
-            ws["B2"] = co2_rate
-            ws["C2"] = cap_base
-            ws["D2"] = ng_base
-            ws["E2"] = solv_base
-            ws["F2"] = labor_base
-            ws["G2"] = trans_base
-            ws["H2"] = eng_base
-            ws["I2"] = cont_base
-            ws["J2"] = capex_base
+    with ub:
+        fcr_upper_bound = st.number_input(label="",value=0.15, min_value=0.00000, label_visibility="collapsed")
+        st.caption("Upper Bound")
 
-            wb.save(EXCEL_PATH)
 
-            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
-            ws = wb["Sheet1"]
-            result = ws["Z10"].value  # Placeholder for single result cell
 
-            st.markdown("### Result")
-            st.success(f"Calculated Cost: {result}")
 
-        except Exception as e:
-            st.error(f"Error: {e}")
+col1, col2, col3 = st.columns(3)
+with col1: 
+    st.write("Capacity Factor (%)")
+    lb, base, ub = col1.columns(3)
 
-with col_btn2:
-    if st.button("Calculate Sensitivity"):
-        try:
-            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=False)
-            ws = wb["Sheet1"]
+    with lb:
+        cf_lower_bound = st.number_input(label="", value=50, min_value=0, label_visibility="collapsed")
+        st.caption("Lower Bound")
 
-            # Write baseline values again
-            ws["A2"] = flue_gas
-            ws["B2"] = co2_rate
-            ws["C2"] = cap_base
-            ws["D2"] = ng_base
-            ws["E2"] = solv_base
-            ws["F2"] = labor_base
-            ws["G2"] = trans_base
-            ws["H2"] = eng_base
-            ws["I2"] = cont_base
-            ws["J2"] = capex_base
+    with base:
+        cf_baseline = st.number_input(label="", value=85, min_value=0, label_visibility="collapsed")
+        st.caption("Baseline")
 
-            wb.save(EXCEL_PATH)
+    with ub:
+        cf_upper_bound = st.number_input(label="",value=95, min_value=0, label_visibility="collapsed")
+        st.caption("Upper Bound")
 
-            wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
-            ws = wb["Sheet1"]
-            low = ws["Z25"].value
-            base = ws["Z26"].value
-            high = ws["Z27"].value
+with col2: 
+    st.write("NG Price ($/MMBtu)")
+    lb, base, ub = col2.columns(3)
 
-            st.markdown("### Sensitivity Results")
-            st.info(f"Lower Bound: {low}")
-            st.success(f"Baseline: {base}")
-            st.warning(f"Upper Bound: {high}")
+    with lb:
+        ng_lower_bound = st.number_input(label="", value=1.3, min_value=0.0000, label_visibility="collapsed")
+        st.caption("Lower Bound")
 
-        except Exception as e:
-            st.error(f"Error: {e}")
+    with base:
+        ng_baseline = st.number_input(label="", value=4.42, min_value=0.00, label_visibility="collapsed")
+        st.caption("Baseline")
+
+    with ub:
+        ng_upper_bound = st.number_input(label="",value=9.4, min_value=0.0, label_visibility="collapsed")
+        st.caption("Upper Bound")
+
+with col3: 
+    st.write("Solvent unit price ($/ton)")
+    lb, base, ub = col3.columns(3)
+
+    with lb:
+        sol_lower_bound = st.number_input(label="", value=550, min_value=0, label_visibility="collapsed")
+        st.caption("Lower Bound")
+
+    with base:
+        sol_baseline = st.number_input(label="", value=1_040, min_value=0, label_visibility="collapsed")
+        st.caption("Baseline")
+
+    with ub:
+        sol_upper_bound = st.number_input(label="",value=10_400, min_value=0, label_visibility="collapsed")
+        st.caption("Upper Bound")
+
+# Making Space
+st.write("")  
+st.write("")  
+
+# For the two buttons and the logic 
+left, center, right = st.columns([1, 2, 1])
+with center:
+    btn1_col, btn2_col = st.columns(2, gap="small")
+    with btn1_col:
+        if st.button("Calculate"):
+            # logic will come in later
+            st.write("Running calculation…")
+    with btn2_col:
+        if st.button("Calculate Sensitivity"):
+            # logic will come in later
+            st.write("Running sensitivity…")
